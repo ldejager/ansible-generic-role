@@ -1,6 +1,6 @@
 ---
 - name: Packages - Install generic useful packages
-  sudo: yes
+  become: true
   yum:
     name: "{{ item }}"
     state: latest
@@ -29,7 +29,7 @@
   tags: selinux
 
 - name: Users - Configure members of wheel group for passwordless sudo
-  sudo: yes
+  become: true
   lineinfile:
     dest: /etc/sudoers
     regexp: "^%wheel"
@@ -39,7 +39,7 @@
     - users
 
 - name: Timezone - Set timezone to etc/utc
-  sudo: yes
+  become: true
   file:
     src: /usr/share/zoneinfo/Etc/UTC
     dest: /etc/localtime
