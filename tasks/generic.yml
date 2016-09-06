@@ -16,7 +16,6 @@
     - rsync
     - bash-completion
     - bind-utils
-    - lvm2
   tags:
     - generic
 
