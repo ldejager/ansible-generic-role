@@ -1,4 +1,12 @@
 ---
+- name: Repos - Enable EPEL repo
+  sudo: yes
+  yum:
+    name: epel-release
+    state: latest
+  tags:
+    - repositories
+
 - name: Packages - Install generic useful packages
   become: true
   yum:
@@ -16,7 +24,6 @@
     - rsync
     - bash-completion
     - bind-utils
-    - lvm3
   tags:
     - generic
 
@@ -45,26 +52,45 @@
     dest: /etc/localtime
     state: link
     force: yes
+  tags:
+    - timezone
 
 - name: Swap - Allocate swap
   command: |
     dd if=/dev/zero of={{ swap_location }} count={{ swap_size }} bs=1MiB creates={{ swap_location }}
   register: allocate_swap
-  when: swap_size != false
+  when:
+    - swap_size|default(False)
+  tags:
+    - swap
 
 - name: Swap - Set permissions
   file: path={{ swap_location }} mode=600
-  when: swap_size != false
+  when:
+    - swap_size|default(False)
+  tags:
+    - swap
 
 - name: Swap - Setup swap
   command: mkswap {{ swap_location }}
   register: setup_swap
-  when: swap_size != false and allocate_swap.changed
+  when:
+    - allocate_swap.changed
+    - swap_size|default(False)
+  tags:
+    - swap
 
 - name: Swap -Enable swap
   command: swapon {{ swap_location }}
-  when: swap_size != false and allocate_swap.changed
+  when:
+    - allocate_swap.changed
+    - swap_size|default(False)
+  tags:
+    - swap
 
 - name: Swap -Add swap to /etc/fstab
   lineinfile: dest=/etc/fstab line="{{ swap_location }}   none    swap    sw    0   0" state=present
-  when: swap_size != false
+  when:
+    - swap_size|default(False)
+  tags:
+    - swap
