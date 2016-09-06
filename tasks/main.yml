@@ -1,6 +1,6 @@
 ---
 - name: Repos - Enable EPEL repo
-  sudo: yes
+  become: true
   yum:
     name: epel-release
     state: latest
