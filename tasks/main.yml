@@ -24,8 +24,49 @@
     - rsync
     - bash-completion
     - bind-utils
+    - iptables-services
   tags:
     - generic
+
+- name: Disable firewalld
+  service: name=firewalld state=stopped
+  tags:
+    - iptables
+
+- name: Create data directory
+  file: path=/data state=directory mode=0755
+  tags:
+    - iptables
+
+- name: Copy iptables.rules to disk
+  copy: src=iptables.rules
+        dest=/data/iptables.rules
+        owner=root group=root mode=0644
+  tags:
+    - iptables
+
+- name: Update iptables unit file
+  lineinfile:
+    state: present
+    dest: /usr/lib/systemd/system/iptables.service
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+    - { regexp: '^ExecStart', line: 'ExecStart=/usr/sbin/iptables-restore /data/iptables.rules' }
+    - { regexp: '^ExecReload', line: 'ExecReload=/usr/sbin/iptables-restore /data/iptables.rules' }
+    - { regexp: '^ExecStop', line: 'ExecStop=/usr/sbin/iptables --flush' }
+  tags:
+    - iptables
+
+- name: Reload systemd
+  command: systemctl daemon-reload
+  tags:
+    - iptables
+
+- name: Enable iptables
+  service: name=iptables state=started
+  tags:
+    - iptables
 
 - name: Selinux - Install libselinux-python package
   yum: name=libselinux-python state=present
